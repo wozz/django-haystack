@@ -4,6 +4,7 @@ from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from haystack.forms import ModelSearchForm
+from haystack.forms import SearchForm
 from haystack.query import EmptySearchQuerySet
 
 
@@ -118,12 +119,14 @@ class SearchView(object):
         """
         Generates the actual HttpResponse to send back to the user.
         """
-        (paginator, page) = self.build_page()
+        #(paginator, page) = self.build_page()
         
+	paginator = ''
+
         context = {
             'query': self.query,
             'form': self.form,
-            'page': page,
+            'page': self.form.search(),
             'paginator': paginator,
         }
         context.update(self.extra_context())
@@ -146,7 +149,7 @@ class FacetedSearchView(SearchView):
         return extra
 
 
-def basic_search(request, template='search/search.html', load_all=True, form_class=ModelSearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None, results_per_page=None):
+def basic_search(request, template='search/search.html', load_all=True, form_class=SearchForm, searchqueryset=None, context_class=RequestContext, extra_context=None, results_per_page=None):
     """
     A more traditional view that also demonstrate an alternative
     way to use Haystack.
@@ -179,17 +182,11 @@ def basic_search(request, template='search/search.html', load_all=True, form_cla
     else:
         form = form_class(searchqueryset=searchqueryset, load_all=load_all)
     
-    paginator = Paginator(results, results_per_page or RESULTS_PER_PAGE)
-    
-    try:
-        page = paginator.page(int(request.GET.get('page', 1)))
-    except InvalidPage:
-        raise Http404("No such page of results!")
     
     context = {
         'form': form,
-        'page': page,
-        'paginator': paginator,
+        'page': results,
+	'paginator': Null,
         'query': query,
     }
     
